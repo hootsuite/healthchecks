@@ -1,0 +1,37 @@
+{
+  "id": "service-id",
+  "summary": "Test Service",
+  "description": "A test service",
+  "maintainers": [
+    "Test1 Testerson <test1.testerson@hootsuite.com>",
+    "Test2 Testerson <test2.testerson@hootsuite.com>"
+  ],
+  "projectRepo": "https://github.com/hootsuite/test-service",
+  "projectHome": "https://home.com/hootsuite/test-service",
+  "logsLinks": [
+    "https://logging.com/hootsuite/test-service-1",
+    "https://logging.com/hootsuite/test-service-2"
+  ],
+  "statsLinks": [
+    "https://stats.com/hootsuite/test-service-1",
+    "https://stats.com/hootsuite/test-service-2"
+  ],
+  "customData": {
+    "custom1": [
+      "custom1-val1",
+      "custom1-val2"
+    ],
+    "custom2": 789,
+    "custom3": "custom3",
+    "custom4": {
+      "innerCustom1": 1,
+      "innerCustom2": "innerCustom2",
+      "innerCustom3": [
+        "innerCustom3-val1",
+        "innerCustom3-val2"
+      ]
+    },
+    "custom5": true,
+    "custom6": null
+  }
+}
