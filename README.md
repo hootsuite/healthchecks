@@ -185,3 +185,5 @@ healthchecks is released under the Apache License, Version 2.0. See [LICENSE](LI
 - :octocat: [Mike Sample](https://github.com/michael-sample-hs) - [@mikesample](https://twitter.com/mikesample)
 - :octocat: [Brandon McRae](https://github.com/brandon-mcrae-hs) - [@HootBrandon](https://twitter.com/HootBrandon)
 - :octocat: [Denis Golovan](https://github.com/denis-golovan-hs) - [@dgolovan](https://twitter.com/dgolovan)
+
+CLA Test
