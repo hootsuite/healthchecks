@@ -9,7 +9,7 @@
 - [Maintainers](#maintainers)
 
 # Introduction
-A go implementation of the [Health Checks API](https://github.com/hootsuite/health-checks-api) used for microservice 
+A go implementation of the [Health Checks API](https://github.com/hootsuite/health-checks-api) used for microservice
 exploration, documentation and monitoring.
 
 # How to Use It
@@ -77,13 +77,13 @@ customData := make(map[string]interface{})
 // customData["an-object"] = customObject
 
 // Register all the "/status/..." requests to use our health checking framework
-app.GET("/status/:slug", ginhc.HealthChecksEndpoints(statusEndpoints, aboutFilePath, versionFilePath, customData))
+http.Handle("/status/", healthchecks.Handler(statusEndpoints, aboutFilePath, versionFilePath, customData))
 ```
 
 # Writing a StatusCheck
-A `StatusCheck` is a struct which implements the function `func CheckStatus(name string) StatusList`. A `StatusCheck` is defined or used in 
-a service but executed by the `healthchecks` framework. The key to a successful `StatusCheck` is to handle all errors on the 
-dependency you are checking. Below is an example of a `StatusCheck` that checks the connection of `Redis` using the 
+A `StatusCheck` is a struct which implements the function `func CheckStatus(name string) StatusList`. A `StatusCheck` is defined or used in
+a service but executed by the `healthchecks` framework. The key to a successful `StatusCheck` is to handle all errors on the
+dependency you are checking. Below is an example of a `StatusCheck` that checks the connection of `Redis` using the
 `gopkg.in/redis.v4` driver.
 
 ```
@@ -125,10 +125,10 @@ func (r RedisStatusChecker) CheckStatus(name string) healthchecks.StatusList {
 ```
 
 # Writing a TraverseCheck
-A `TraverseCheck` is a struct which implements the function `func Traverse(traversalPath []string, action string) (string, error)`. 
-A `TraverseCheck` is defined or used in a service but executed by the `healthchecks` framework. The key to a successful 
-`TraverseCheck` is to build and execute the `/status/traverse?action=[action]&dependencies=[dependencies]` request to 
-the service you are trying to traverse to and returning the response or error you got. Below is an example of a 
+A `TraverseCheck` is a struct which implements the function `func Traverse(traversalPath []string, action string) (string, error)`.
+A `TraverseCheck` is defined or used in a service but executed by the `healthchecks` framework. The key to a successful
+`TraverseCheck` is to build and execute the `/status/traverse?action=[action]&dependencies=[dependencies]` request to
+the service you are trying to traverse to and returning the response or error you got. Below is an example of a
 `TraverseCheck` for an HTTP service.
 
 ```
@@ -161,7 +161,7 @@ func (h HttpStatusChecker) Traverse(traversalPath []string, action string) (stri
 
 	// Defer the closing of the body
 	defer resp.Body.Close()
-	
+
 	// Read our response
 	responseBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
