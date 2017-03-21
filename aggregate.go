@@ -73,6 +73,7 @@ func Aggregate(statusEndpoints []StatusEndpoint, typeFilter string) string {
 	}()
 
 	wg.Wait()
+	close(responses)
 
 	sl := StatusList{
 		StatusList: []Status{
