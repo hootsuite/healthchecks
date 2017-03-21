@@ -233,6 +233,7 @@ func About(statusEndpoints []StatusEndpoint, protocol string, aboutFilePath stri
 
 	// Wait until all async status checks are done and collected
 	wg.Wait()
+	close(dc)
 
 	aboutResponse.Dependencies = dependencies
 
