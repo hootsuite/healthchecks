@@ -183,5 +183,6 @@ healthchecks is released under the Apache License, Version 2.0. See [LICENSE](LI
 # Maintainers
 - :octocat: [Adam Arsenault](https://github.com/HootAdam) - [@Adam_Arsenault](https://twitter.com/Adam_Arsenault)
 - :octocat: [Mike Sample](https://github.com/michael-sample-hs) - [@mikesample](https://twitter.com/mikesample)
+- :octocat: [Jim Riecken](https://github.com/jriecken) - [@jimriecken](https://twitter.com/jimriecken)
 - :octocat: [Brandon McRae](https://github.com/brandon-mcrae-hs) - [@HootBrandon](https://twitter.com/HootBrandon)
 - :octocat: [Denis Golovan](https://github.com/denis-golovan-hs) - [@dgolovan](https://twitter.com/dgolovan)
