@@ -14,7 +14,8 @@ type HttpStatusChecker struct {
 }
 
 func (h HttpStatusChecker) CheckStatus(name string) healthchecks.StatusList {
-	url := fmt.Sprintf("%s/status/aggregate", h.BaseUrl)
+	baseUrl := strings.TrimSuffix(h.BaseUrl, "/")
+	url := fmt.Sprintf("%s/status/aggregate", baseUrl)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return healthchecks.StatusList{
@@ -124,7 +125,8 @@ func (h HttpStatusChecker) Traverse(traversalPath []string, action string) (stri
 		dependencies = fmt.Sprintf("&dependencies=%s", strings.Join(traversalPath, ","))
 	}
 
-	url := fmt.Sprintf("%s/status/traverse?action=%s%s", h.BaseUrl, action, dependencies)
+	baseUrl := strings.TrimSuffix(h.BaseUrl, "/")
+	url := fmt.Sprintf("%s/status/traverse?action=%s%s",baseUrl , action, dependencies)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Printf("Error creating request: %s \n", err.Error())
