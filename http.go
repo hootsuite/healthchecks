@@ -15,7 +15,7 @@ func Handler(statusEndpoints []StatusEndpoint, aboutFilePath string, versionFile
 // HandlerFunc returns a http.HandlerFunc that responds to status check requests. It should be registered at `/status/...`
 func HandlerFunc(statusEndpoints []StatusEndpoint, aboutFilePath string, versionFilePath string, customData map[string]interface{}) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		slug := strings.Split(r.URL.Path, "/")
+		slug := strings.SplitN(r.URL.Path, "/", 3)
 		endpoint := slug[2]
 
 		switch endpoint {
@@ -29,6 +29,23 @@ func HandlerFunc(statusEndpoints []StatusEndpoint, aboutFilePath string, version
 		case "am-i-up":
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			io.WriteString(w, "OK")
+		case "v2/am-i-up":
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			io.WriteString(
+				w,
+				SerializeStatusList(
+					StatusList{
+						StatusList: []Status{
+							Status{
+								Description: "Am I Up",
+								Result:      OK,
+								Details:     "The service is running",
+							},
+						},
+					},
+					APIV2,
+				),
+			)
 		case "traverse":
 			action := r.URL.Query().Get("action")
 			if action == "" {
@@ -60,7 +77,7 @@ func HandlerFunc(statusEndpoints []StatusEndpoint, aboutFilePath string, version
 			}
 
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
-			io.WriteString(w, ExecuteStatusCheck(endpoint))
+			io.WriteString(w, ExecuteStatusCheck(endpoint, apiVersion))
 		}
 	})
 }

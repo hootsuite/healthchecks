@@ -24,6 +24,16 @@ func TestHttpAmIUp(t *testing.T) {
 	assertBody("OK", t, w)
 }
 
+func TestHttpAmIUpV2(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/status/v2/am-i-up", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	assertStatusCode(http.StatusOK, t, w)
+	assertContentTypeHeader("text/plain; charset=utf-8", t, w)
+	assertBody("{}")
+}
 func TestHttpAbout(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/status/about?action=", nil)
 	w := httptest.NewRecorder()
