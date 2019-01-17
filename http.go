@@ -120,19 +120,6 @@ func handleV2Api(
 				APIV2,
 			),
 		)
-	case "traverse":
-		action := r.URL.Query().Get("action")
-		if action == "" {
-			action = "about"
-		}
-		dependencies := []string{}
-		queryDependencies := r.URL.Query().Get("dependencies")
-		if queryDependencies != "" {
-			dependencies = strings.Split(queryDependencies, ",")
-		}
-
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		io.WriteString(w, Traverse(statusEndpoints, dependencies, action, ABOUT_PROTOCOL_HTTP, aboutFilePath, versionFilePath, customData))
 	default:
 		endpoint := FindStatusEndpoint(statusEndpoints, endpoint)
 		if endpoint == nil {
