@@ -22,11 +22,12 @@ func HandlerFunc(statusEndpoints []StatusEndpoint, aboutFilePath string, version
 			apiVersion = APIV2
 		}
 
-		if apiVersion == APIV2 {
+		switch apiVersion {
+		case APIV1:
+			handleV1Api(w, r, slug[2], statusEndpoints, aboutFilePath, versionFilePath, customData)
+		case APIV2:
 			handleV2Api(w, r, slug[3], statusEndpoints, aboutFilePath, versionFilePath, customData)
 		}
-
-		handleV1Api(w, r, slug[2], statusEndpoints, aboutFilePath, versionFilePath, customData)
 	})
 }
 
