@@ -51,23 +51,6 @@ func handleV1Api(
 	case "am-i-up":
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		io.WriteString(w, "OK")
-	case "v2/am-i-up":
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		io.WriteString(
-			w,
-			SerializeStatusList(
-				StatusList{
-					StatusList: []Status{
-						Status{
-							Description: "Am I Up",
-							Result:      OK,
-							Details:     "The service is running",
-						},
-					},
-				},
-				APIV2,
-			),
-		)
 	case "traverse":
 		action := r.URL.Query().Get("action")
 		if action == "" {
