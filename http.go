@@ -101,7 +101,7 @@ func handleV2Api(
 		checkStatusStr := r.URL.Query().Get("checkStatus")
 		checkStatus := true
 		if checkStatusStr != "" {
-			checkStatus, _ := strconv.ParseBool(checkStatusStr)
+			checkStatus, _ = strconv.ParseBool(checkStatusStr)
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		io.WriteString(w, About(statusEndpoints, ABOUT_PROTOCOL_HTTP, aboutFilePath, versionFilePath, customData, APIV2, checkStatus))

@@ -186,8 +186,9 @@ func About(
 	case APIV1:
 		return aboutV1(statusEndpoints, protocol, aboutFilePath, versionFilePath, customData)
 	case APIV2:
-		return aboutV2(statusEndpoints, protocol, aboutFilePath, versionFilePath, customData)
+		return aboutV2(statusEndpoints, protocol, aboutFilePath, versionFilePath, customData, checkStatus)
 	}
+	return ""
 }
 
 func aboutV1(
