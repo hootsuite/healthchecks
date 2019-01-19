@@ -108,7 +108,7 @@ func translateStatusList(s StatusList) []JsonResponse {
 
 func ExecuteStatusCheck(s *StatusEndpoint, apiVersion int) string {
 	result := s.StatusCheck.CheckStatus(s.Name)
-	return SerializeStatusList(result)
+	return SerializeStatusList(result, apiVersion)
 }
 
 // Find the StatusEndpoint given the slug (aka Status Path) to search for.

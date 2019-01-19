@@ -7,7 +7,7 @@ import (
 // Execute all statusEndpoint StatusCheck() functions asynchronously and return the
 // overall status by returning the highest severity item in the following order:
 // CRIT, WARN, OK
-func Aggregate(statusEndpoints []StatusEndpoint, typeFilter string) string {
+func Aggregate(statusEndpoints []StatusEndpoint, typeFilter string, apiVersion int) string {
 
 	if len(typeFilter) > 0 {
 		if typeFilter != "internal" && typeFilter != "external" {
@@ -21,7 +21,7 @@ func Aggregate(statusEndpoints []StatusEndpoint, typeFilter string) string {
 				},
 			}
 
-			return SerializeStatusList(sl)
+			return SerializeStatusList(sl, apiVersion)
 		}
 	}
 
@@ -91,5 +91,5 @@ func Aggregate(statusEndpoints []StatusEndpoint, typeFilter string) string {
 		sl = warns[0]
 	}
 
-	return SerializeStatusList(sl)
+	return SerializeStatusList(sl, apiVersion)
 }

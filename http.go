@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -43,11 +44,11 @@ func handleV1Api(
 	switch endpoint {
 	case "about":
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		io.WriteString(w, About(statusEndpoints, ABOUT_PROTOCOL_HTTP, aboutFilePath, versionFilePath, customData))
+		io.WriteString(w, About(statusEndpoints, ABOUT_PROTOCOL_HTTP, aboutFilePath, versionFilePath, customData, APIV1, true))
 	case "aggregate":
 		typeFilter := r.URL.Query().Get("type")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		io.WriteString(w, Aggregate(statusEndpoints, typeFilter))
+		io.WriteString(w, Aggregate(statusEndpoints, typeFilter, APIV1))
 	case "am-i-up":
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		io.WriteString(w, "OK")
@@ -97,12 +98,17 @@ func handleV2Api(
 ) {
 	switch endpoint {
 	case "about":
+		checkStatusStr := r.URL.Query().Get("checkStatus")
+		checkStatus := true
+		if checkStatusStr != "" {
+			checkStatus, _ := strconv.ParseBool(checkStatusStr)
+		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		io.WriteString(w, About(statusEndpoints, ABOUT_PROTOCOL_HTTP, aboutFilePath, versionFilePath, customData))
+		io.WriteString(w, About(statusEndpoints, ABOUT_PROTOCOL_HTTP, aboutFilePath, versionFilePath, customData, APIV2, checkStatus))
 	case "aggregate":
 		typeFilter := r.URL.Query().Get("type")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		io.WriteString(w, Aggregate(statusEndpoints, typeFilter))
+		io.WriteString(w, Aggregate(statusEndpoints, typeFilter, APIV2))
 	case "am-i-up":
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		io.WriteString(
@@ -128,7 +134,7 @@ func handleV2Api(
 			io.WriteString(w, SerializeStatusList(StatusList{
 				StatusList: []Status{
 					{
-						Description: "Unknow Status endpoint",
+						Description: "Unknown  Status endpoint",
 						Result:      CRITICAL,
 						Details:     fmt.Sprintf("Status endpoint does not exist: %s", r.URL.Path),
 					},

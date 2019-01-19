@@ -118,7 +118,14 @@ func getAboutCustomDataFieldValues(aboutConfigMap map[string]interface{}, aboutF
 	return mapValue
 }
 
-func About(statusEndpoints []StatusEndpoint, protocol string, aboutFilePath string, versionFilePath string, customData map[string]interface{}) string {
+func About(
+	statusEndpoints []StatusEndpoint,
+	protocol string, aboutFilePath string,
+	versionFilePath string,
+	customData map[string]interface{},
+	apiVersion int,
+	checkStatus bool,
+) string {
 	aboutData, _ := ioutil.ReadFile(aboutFilePath)
 
 	// Initialize ConfigAbout with default values in case we have problems reading from the file
@@ -196,44 +203,48 @@ func About(statusEndpoints []StatusEndpoint, protocol string, aboutFilePath stri
 		CustomData:  aboutConfig.CustomData,
 	}
 
-	// Execute status checks async
-	var wg sync.WaitGroup
-	dc := make(chan dependencyPosition)
-	wg.Add(len(statusEndpoints))
-
-	for ie, se := range statusEndpoints {
-		go func(s StatusEndpoint, i int) {
-			start := time.Now()
-			dependencyStatus := translateStatusList(s.StatusCheck.CheckStatus(s.Name))
-			var elapsed float64 = float64(time.Since(start)) * 0.000000001
-			dependency := Dependency{
-				Name:           s.Name,
-				Status:         dependencyStatus,
-				StatusDuration: elapsed,
-				StatusPath:     s.Slug,
-				Type:           s.Type,
-				IsTraversable:  s.IsTraversable,
-			}
-
-			dc <- dependencyPosition{
-				item:     dependency,
-				position: i,
-			}
-		}(se, ie)
-	}
-
-	// Collect our responses and put them in the right spot
 	dependencies := make([]Dependency, len(statusEndpoints))
-	go func() {
-		for dp := range dc {
-			dependencies[dp.position] = dp.item
-			wg.Done()
-		}
-	}()
+	if checkStatus {
+		// Execute status checks async
+		var wg sync.WaitGroup
+		dc := make(chan dependencyPosition)
+		wg.Add(len(statusEndpoints))
 
-	// Wait until all async status checks are done and collected
-	wg.Wait()
-	close(dc)
+		for ie, se := range statusEndpoints {
+			go func(s StatusEndpoint, i int) {
+				start := time.Now()
+				dependencyStatus := translateStatusList(s.StatusCheck.CheckStatus(s.Name))
+				elapsed := float64(time.Since(start)) * 0.000000001
+				dependency := Dependency{
+					Name:           s.Name,
+					Status:         dependencyStatus,
+					StatusDuration: elapsed,
+					StatusPath:     s.Slug,
+					Type:           s.Type,
+					IsTraversable:  s.IsTraversable,
+				}
+
+				dc <- dependencyPosition{
+					item:     dependency,
+					position: i,
+				}
+			}(se, ie)
+		}
+
+		// Collect our responses and put them in the right spot
+		go func() {
+			for dp := range dc {
+				dependencies[dp.position] = dp.item
+				wg.Done()
+			}
+		}()
+
+		// Wait until all async status checks are done and collected
+		wg.Wait()
+		close(dc)
+	} else {
+		dependencies = statusEndpointsToDependencies(statusEndpoints)
+	}
 
 	aboutResponse.Dependencies = dependencies
 
@@ -245,8 +256,21 @@ func About(statusEndpoints []StatusEndpoint, protocol string, aboutFilePath stri
 				{Description: "Invalid AboutResponse", Result: CRITICAL, Details: msg},
 			},
 		}
-		return SerializeStatusList(sl)
+		return SerializeStatusList(sl, apiVersion)
 	}
 
 	return string(aboutResponseJson)
+}
+
+func statusEndpointsToDependencies(statusEndpoints []StatusEndpoint) []Dependency {
+	dependencies := make([]Dependency, len(statusEndpoints))
+	for _, statusEndpoint := range statusEndpoints {
+		dependencies = append(dependencies, Dependency{
+			Name:          statusEndpoint.Name,
+			StatusPath:    statusEndpoint.Slug,
+			Type:          statusEndpoint.Type,
+			IsTraversable: statusEndpoint.IsTraversable,
+		})
+	}
+	return dependencies
 }

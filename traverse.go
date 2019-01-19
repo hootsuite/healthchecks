@@ -15,7 +15,7 @@ func Traverse(s []StatusEndpoint, dependencies []string, action string, protocol
 		// run the action
 		switch action {
 		case "about":
-			return About(s, protocol, aboutFilePath, versionFilePath, customData)
+			return About(s, protocol, aboutFilePath, versionFilePath, customData, APIV1, true)
 		default:
 			sl := StatusList{
 				StatusList: []Status{
@@ -27,7 +27,7 @@ func Traverse(s []StatusEndpoint, dependencies []string, action string, protocol
 				},
 			}
 
-			return SerializeStatusList(sl)
+			return SerializeStatusList(sl, APIV1)
 		}
 	}
 
@@ -45,7 +45,7 @@ func Traverse(s []StatusEndpoint, dependencies []string, action string, protocol
 			},
 		}
 
-		return SerializeStatusList(sl)
+		return SerializeStatusList(sl, APIV1)
 	}
 
 	if !headStatusEndpoint.IsTraversable {
@@ -59,7 +59,7 @@ func Traverse(s []StatusEndpoint, dependencies []string, action string, protocol
 			},
 		}
 
-		return SerializeStatusList(sl)
+		return SerializeStatusList(sl, APIV1)
 	}
 
 	if headStatusEndpoint.TraverseCheck == nil {
@@ -73,7 +73,7 @@ func Traverse(s []StatusEndpoint, dependencies []string, action string, protocol
 			},
 		}
 
-		return SerializeStatusList(sl)
+		return SerializeStatusList(sl, APIV1)
 	}
 
 	// found dependency, continue to traverse with the tail of the dependencies
@@ -90,7 +90,7 @@ func Traverse(s []StatusEndpoint, dependencies []string, action string, protocol
 			},
 		}
 
-		return SerializeStatusList(sl)
+		return SerializeStatusList(sl, APIV1)
 	} else {
 		return resp
 	}
