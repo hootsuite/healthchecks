@@ -80,7 +80,7 @@ func Aggregate(statusEndpoints []StatusEndpoint, typeFilter string, apiVersion i
 			{
 				Description: "Aggregate Check",
 				Result:      OK,
-				Details:     "",
+				Details:     "All checks are OK",
 			},
 		},
 	}
