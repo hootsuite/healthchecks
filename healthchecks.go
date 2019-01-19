@@ -106,6 +106,18 @@ func translateStatusList(s StatusList) []JsonResponse {
 	}
 }
 
+func translateStatusListV2(s StatusList) JsonResponse {
+	if len(s.StatusList) <= 0 {
+		return Status{
+			Description: "Invalid status response",
+			Result:      CRITICAL,
+			Details:     "StatusList empty",
+		}
+	}
+
+	return s.StatusList[0]
+}
+
 func ExecuteStatusCheck(s *StatusEndpoint, apiVersion int) string {
 	result := s.StatusCheck.CheckStatus(s.Name)
 	return SerializeStatusList(result, apiVersion)

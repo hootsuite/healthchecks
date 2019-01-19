@@ -44,6 +44,22 @@ type AboutResponse struct {
 	CustomData   map[string]interface{} `json:"customData"`
 }
 
+type AboutResponseV2 struct {
+	Id           string                 `json:"id"`
+	Name         string                 `json:"name"`
+	Description  string                 `json:"description"`
+	Protocol     string                 `json:"protocol"`
+	Owners       []string               `json:"owners"`
+	Version      string                 `json:"version"`
+	Host         string                 `json:"host"`
+	ProjectRepo  string                 `json:"projectRepo"`
+	ProjectHome  string                 `json:"projectHome"`
+	LogsLinks    []string               `json:"logsLinks"`
+	StatsLinks   []string               `json:"statsLinks"`
+	Dependencies []DependencyV2         `json:"dependencies"`
+	CustomData   map[string]interface{} `json:"customData"`
+}
+
 type Dependency struct {
 	Name           string         `json:"name"`
 	Status         []JsonResponse `json:"status"`
@@ -53,8 +69,22 @@ type Dependency struct {
 	IsTraversable  bool           `json:"isTraversable"`
 }
 
+type DependencyV2 struct {
+	Name           string       `json:"name"`
+	Status         JsonResponse `json:"status"`
+	StatusDuration float64      `json:"statusDuration"`
+	StatusPath     string       `json:"statusPath"`
+	Type           string       `json:"type"`
+	IsTraversable  bool         `json:"isTraversable"`
+}
+
 type dependencyPosition struct {
 	item     Dependency
+	position int
+}
+
+type dependencyPositionV2 struct {
+	item     DependencyV2
 	position int
 }
 
@@ -118,6 +148,32 @@ func getAboutCustomDataFieldValues(aboutConfigMap map[string]interface{}, aboutF
 	return mapValue
 }
 
+func statusEndpointsToDependencies(statusEndpoints []StatusEndpoint) []Dependency {
+	dependencies := make([]Dependency, len(statusEndpoints))
+	for _, statusEndpoint := range statusEndpoints {
+		dependencies = append(dependencies, Dependency{
+			Name:          statusEndpoint.Name,
+			StatusPath:    statusEndpoint.Slug,
+			Type:          statusEndpoint.Type,
+			IsTraversable: statusEndpoint.IsTraversable,
+		})
+	}
+	return dependencies
+}
+
+func statusEndpointsToDependenciesV2(statusEndpoints []StatusEndpoint) []Dependency {
+	dependencies := make([]Dependency, len(statusEndpoints))
+	for _, statusEndpoint := range statusEndpoints {
+		dependencies = append(dependencies, Dependency{
+			Name:          statusEndpoint.Name,
+			StatusPath:    statusEndpoint.Slug,
+			Type:          statusEndpoint.Type,
+			IsTraversable: statusEndpoint.IsTraversable,
+		})
+	}
+	return dependencies
+}
+
 func About(
 	statusEndpoints []StatusEndpoint,
 	protocol string, aboutFilePath string,
@@ -125,6 +181,20 @@ func About(
 	customData map[string]interface{},
 	apiVersion int,
 	checkStatus bool,
+) string {
+	switch apiVersion {
+	case APIV1:
+		return aboutV1(statusEndpoints, protocol, aboutFilePath, versionFilePath, customData)
+	case APIV2:
+		return aboutV2(statusEndpoints, protocol, aboutFilePath, versionFilePath, customData)
+	}
+}
+
+func aboutV1(
+	statusEndpoints []StatusEndpoint,
+	protocol string, aboutFilePath string,
+	versionFilePath string,
+	customData map[string]interface{},
 ) string {
 	aboutData, _ := ioutil.ReadFile(aboutFilePath)
 
@@ -203,19 +273,158 @@ func About(
 		CustomData:  aboutConfig.CustomData,
 	}
 
+	// Execute status checks async
+	var wg sync.WaitGroup
+	dc := make(chan dependencyPosition)
+	wg.Add(len(statusEndpoints))
+
+	for ie, se := range statusEndpoints {
+		go func(s StatusEndpoint, i int) {
+			start := time.Now()
+			dependencyStatus := translateStatusList(s.StatusCheck.CheckStatus(s.Name))
+			elapsed := float64(time.Since(start)) * 0.000000001
+			dependency := Dependency{
+				Name:           s.Name,
+				Status:         dependencyStatus,
+				StatusDuration: elapsed,
+				StatusPath:     s.Slug,
+				Type:           s.Type,
+				IsTraversable:  s.IsTraversable,
+			}
+
+			dc <- dependencyPosition{
+				item:     dependency,
+				position: i,
+			}
+		}(se, ie)
+	}
+
+	// Collect our responses and put them in the right spot
 	dependencies := make([]Dependency, len(statusEndpoints))
+	go func() {
+		for dp := range dc {
+			dependencies[dp.position] = dp.item
+			wg.Done()
+		}
+	}()
+
+	// Wait until all async status checks are done and collected
+	wg.Wait()
+	close(dc)
+
+	aboutResponse.Dependencies = dependencies
+
+	aboutResponseJSON, err := json.Marshal(aboutResponse)
+	if err != nil {
+		msg := fmt.Sprintf("Error serializing AboutResponse: %s", err)
+		sl := StatusList{
+			StatusList: []Status{
+				{Description: "Invalid AboutResponse", Result: CRITICAL, Details: msg},
+			},
+		}
+		return SerializeStatusList(sl, APIV1)
+	}
+
+	return string(aboutResponseJSON)
+}
+
+func aboutV2(
+	statusEndpoints []StatusEndpoint,
+	protocol string, aboutFilePath string,
+	versionFilePath string,
+	customData map[string]interface{},
+	checkStatus bool,
+) string {
+	aboutData, _ := ioutil.ReadFile(aboutFilePath)
+
+	// Initialize ConfigAbout with default values in case we have problems reading from the file
+	aboutConfig := ConfigAbout{
+		Id:          ABOUT_FIELD_NA,
+		Summary:     ABOUT_FIELD_NA,
+		Description: ABOUT_FIELD_NA,
+		Maintainers: []string{},
+		ProjectRepo: ABOUT_FIELD_NA,
+		ProjectHome: ABOUT_FIELD_NA,
+		LogsLinks:   []string{},
+		StatsLinks:  []string{},
+	}
+
+	// Unmarshal JSON into a generic object so we don't completely fail if one of the fields is invalid or missing
+	var aboutConfigMap map[string]interface{}
+	err := json.Unmarshal(aboutData, &aboutConfigMap)
+
+	if err == nil {
+		// Parse out each value individually
+		aboutConfig.Id = getAboutFieldValue(aboutConfigMap, "id", aboutFilePath)
+		aboutConfig.Summary = getAboutFieldValue(aboutConfigMap, "summary", aboutFilePath)
+		aboutConfig.Description = getAboutFieldValue(aboutConfigMap, "description", aboutFilePath)
+		aboutConfig.Maintainers = getAboutFieldValues(aboutConfigMap, "maintainers", aboutFilePath)
+		aboutConfig.ProjectRepo = getAboutFieldValue(aboutConfigMap, "projectRepo", aboutFilePath)
+		aboutConfig.ProjectHome = getAboutFieldValue(aboutConfigMap, "projectHome", aboutFilePath)
+		aboutConfig.LogsLinks = getAboutFieldValues(aboutConfigMap, "logsLinks", aboutFilePath)
+		aboutConfig.StatsLinks = getAboutFieldValues(aboutConfigMap, "statsLinks", aboutFilePath)
+		aboutConfig.CustomData = getAboutCustomDataFieldValues(aboutConfigMap, aboutFilePath)
+	} else {
+		fmt.Printf("Error deserializing about data from %s. Error: %s JSON: %s\n", aboutFilePath, err.Error(), aboutData)
+	}
+
+	// Merge custom data from about.json with custom data passed in by client
+	// and prefer values passed by client over values in about.json
+	if customData != nil {
+		if aboutConfig.CustomData == nil {
+			aboutConfig.CustomData = make(map[string]interface{})
+		}
+
+		for key, value := range customData {
+			aboutConfig.CustomData[key] = value
+		}
+	}
+
+	// Extract version
+	var version string
+	versionData, err := ioutil.ReadFile(versionFilePath)
+	if err != nil {
+		fmt.Printf("Error reading version from %s. Error: %s\n", versionFilePath, err.Error())
+		version = VERSION_NA
+	} else {
+		version = strings.TrimSpace(string(versionData))
+	}
+
+	// Get hostname
+	host, err := os.Hostname()
+	if err != nil {
+		fmt.Printf("Error getting hostname. Error: %s\n", err.Error())
+		host = "unknown"
+	}
+
+	aboutResponse := AboutResponseV2{
+		Id:          aboutConfig.Id,
+		Name:        aboutConfig.Summary,
+		Description: aboutConfig.Description,
+		Protocol:    protocol,
+		Owners:      aboutConfig.Maintainers,
+		Version:     version,
+		Host:        host,
+		ProjectRepo: aboutConfig.ProjectRepo,
+		ProjectHome: aboutConfig.ProjectHome,
+		LogsLinks:   aboutConfig.LogsLinks,
+		StatsLinks:  aboutConfig.StatsLinks,
+		CustomData:  aboutConfig.CustomData,
+	}
+
+	dependencies := make([]DependencyV2, len(statusEndpoints))
 	if checkStatus {
 		// Execute status checks async
 		var wg sync.WaitGroup
-		dc := make(chan dependencyPosition)
+		dc := make(chan dependencyPositionV2)
 		wg.Add(len(statusEndpoints))
 
 		for ie, se := range statusEndpoints {
 			go func(s StatusEndpoint, i int) {
 				start := time.Now()
-				dependencyStatus := translateStatusList(s.StatusCheck.CheckStatus(s.Name))
+				dependencyStatus := translateStatusListV2(s.StatusCheck.CheckStatus(s.Name))
 				elapsed := float64(time.Since(start)) * 0.000000001
-				dependency := Dependency{
+				dependency := DependencyV2{
 					Name:           s.Name,
 					Status:         dependencyStatus,
 					StatusDuration: elapsed,
@@ -224,7 +433,7 @@ func About(
 					IsTraversable:  s.IsTraversable,
 				}
 
-				dc <- dependencyPosition{
+				dc <- dependencyPositionV2{
 					item:     dependency,
 					position: i,
 				}
@@ -243,12 +452,19 @@ func About(
 		wg.Wait()
 		close(dc)
 	} else {
-		dependencies = statusEndpointsToDependencies(statusEndpoints)
+		for _, statusEndpoint := range statusEndpoints {
+			dependencies = append(dependencies, DependencyV2{
+				Name:          statusEndpoint.Name,
+				StatusPath:    statusEndpoint.Slug,
+				Type:          statusEndpoint.Type,
+				IsTraversable: statusEndpoint.IsTraversable,
+			})
+		}
 	}
 
 	aboutResponse.Dependencies = dependencies
 
-	aboutResponseJson, err := json.Marshal(aboutResponse)
+	aboutResponseJSON, err := json.Marshal(aboutResponse)
 	if err != nil {
 		msg := fmt.Sprintf("Error serializing AboutResponse: %s", err)
 		sl := StatusList{
@@ -256,21 +472,8 @@ func About(
 				{Description: "Invalid AboutResponse", Result: CRITICAL, Details: msg},
 			},
 		}
-		return SerializeStatusList(sl, apiVersion)
+		return SerializeStatusList(sl, APIV2)
 	}
 
-	return string(aboutResponseJson)
-}
-
-func statusEndpointsToDependencies(statusEndpoints []StatusEndpoint) []Dependency {
-	dependencies := make([]Dependency, len(statusEndpoints))
-	for _, statusEndpoint := range statusEndpoints {
-		dependencies = append(dependencies, Dependency{
-			Name:          statusEndpoint.Name,
-			StatusPath:    statusEndpoint.Slug,
-			Type:          statusEndpoint.Type,
-			IsTraversable: statusEndpoint.IsTraversable,
-		})
-	}
-	return dependencies
+	return string(aboutResponseJSON)
 }
