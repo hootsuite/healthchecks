@@ -51,6 +51,22 @@ func TestHttpAbout(t *testing.T) {
 	}
 }
 
+func TestHttpAboutV2(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/status/v2/about", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	assertSuccessfulJSONResponse(t, w)
+
+	bodyAsString := strings.TrimSpace(w.Body.String())
+	testAboutResponse := AboutResponseV2{}
+	err := json.Unmarshal(w.Body.Bytes(), &testAboutResponse)
+	if err != nil {
+		t.Errorf("Response body is an invalid About format, was: `%s`", bodyAsString)
+	}
+}
+
 func TestHttpAggregate(t *testing.T) {
 	aggregateHandler := Handler([]StatusEndpoint{
 		{
@@ -81,6 +97,38 @@ func TestHttpAggregate(t *testing.T) {
 
 	assertSuccessfulJSONResponse(t, w)
 	assertBody(`["OK"]`, t, w)
+}
+
+func TestHttpAggregateV2(t *testing.T) {
+	aggregateHandler := Handler([]StatusEndpoint{
+		{
+			Name:          "AAA",
+			Slug:          "aaa",
+			Type:          "internal",
+			IsTraversable: false,
+			StatusCheck:   MockStatusChecker{"AAA", OK, "all good"},
+			TraverseCheck: nil,
+		},
+		{
+			Name:          "BBB",
+			Slug:          "bbb",
+			Type:          "internal",
+			IsTraversable: false,
+			StatusCheck:   MockStatusChecker{"BBB", OK, "all good"},
+			TraverseCheck: nil,
+		},
+	},
+		"test/about.json",
+		"test/version.txt",
+		make(map[string]interface{}),
+	)
+	req, _ := http.NewRequest("GET", "/status/v2/aggregate", nil)
+	w := httptest.NewRecorder()
+
+	aggregateHandler.ServeHTTP(w, req)
+
+	assertSuccessfulJSONResponse(t, w)
+	assertBody(`{"description":"Aggregate Check","result":"OK","details":""}`, t, w)
 }
 
 func TestHttpInvalidEndpoint(t *testing.T) {

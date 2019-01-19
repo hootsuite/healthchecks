@@ -67,7 +67,7 @@ func TestAboutServiceCustomData(t *testing.T) {
 	serviceCustomData = make(map[string]interface{})
 	serviceCustomData["some-key"] = "some-value"
 
-	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about.json", "test/version.txt", serviceCustomData, APIV2, true)
+	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about.json", "test/version.txt", serviceCustomData, APIV1, true)
 
 	testAboutResponse := AboutResponse{}
 	err := json.Unmarshal([]byte(aboutResponseString), &testAboutResponse)

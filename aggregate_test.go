@@ -167,7 +167,7 @@ func TestAggregateExternalType(t *testing.T) {
 		},
 	}
 
-	aggregateResponse := Aggregate(statusEndpoints, "external", APIV2)
+	aggregateResponse := Aggregate(statusEndpoints, "external", APIV1)
 	expected := `["OK"]`
 	if aggregateResponse != expected {
 		t.Errorf("Response body should be `%s`, was: `%s`", expected, aggregateResponse)
