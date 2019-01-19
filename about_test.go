@@ -2,12 +2,13 @@ package healthchecks
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAboutResponse(t *testing.T) {
-	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about.json", "test/version.txt", emptyCustomData)
+	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about.json", "test/version.txt", emptyCustomData, APIV1, true)
 
 	testAboutResponse := AboutResponse{}
 	err := json.Unmarshal([]byte(aboutResponseString), &testAboutResponse)
@@ -19,7 +20,7 @@ func TestAboutResponse(t *testing.T) {
 }
 
 func TestAboutEmptyAboutData(t *testing.T) {
-	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "", "", emptyCustomData)
+	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "", "", emptyCustomData, APIV1, true)
 
 	testAboutResponse := AboutResponse{}
 	err := json.Unmarshal([]byte(aboutResponseString), &testAboutResponse)
@@ -36,7 +37,7 @@ func TestAboutEmptyAboutData(t *testing.T) {
 }
 
 func TestAboutFieldMissingAboutData(t *testing.T) {
-	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/service-id-field-missing.json", "test/version.txt", emptyCustomData)
+	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/service-id-field-missing.json", "test/version.txt", emptyCustomData, APIV1, true)
 
 	testAboutResponse := AboutResponse{}
 	err := json.Unmarshal([]byte(aboutResponseString), &testAboutResponse)
@@ -49,7 +50,7 @@ func TestAboutFieldMissingAboutData(t *testing.T) {
 
 func TestAboutCustomData(t *testing.T) {
 	serviceCustomData := make(map[string]interface{})
-	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about-custom.json", "test/version.txt", serviceCustomData)
+	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about-custom.json", "test/version.txt", serviceCustomData, APIV1, true)
 
 	testAboutResponse := AboutResponse{}
 	err := json.Unmarshal([]byte(aboutResponseString), &testAboutResponse)
@@ -66,7 +67,7 @@ func TestAboutServiceCustomData(t *testing.T) {
 	serviceCustomData = make(map[string]interface{})
 	serviceCustomData["some-key"] = "some-value"
 
-	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about.json", "test/version.txt", serviceCustomData)
+	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about.json", "test/version.txt", serviceCustomData, APIV2, true)
 
 	testAboutResponse := AboutResponse{}
 	err := json.Unmarshal([]byte(aboutResponseString), &testAboutResponse)
@@ -89,7 +90,7 @@ func TestAboutServiceOverwritesCustomData(t *testing.T) {
 	serviceCustomData["custom4"] = serviceCustom4
 	serviceCustomData["custom5"] = true
 
-	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about-custom.json", "test/version.txt", serviceCustomData)
+	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about-custom.json", "test/version.txt", serviceCustomData, APIV1, true)
 
 	testAboutResponse := AboutResponse{}
 	err := json.Unmarshal([]byte(aboutResponseString), &testAboutResponse)
@@ -110,6 +111,21 @@ func TestAboutServiceOverwritesCustomData(t *testing.T) {
 	customData["custom4"] = custom4
 	customData["custom5"] = true
 	assertEqualAboutData(t, testAboutResponse, customData, defaultServiceId)
+}
+
+func TestAboutDoesNotCheckStatus(t *testing.T) {
+	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "", "", emptyCustomData, APIV2, false)
+
+	testAboutResponse := AboutResponse{}
+	err := json.Unmarshal([]byte(aboutResponseString), &testAboutResponse)
+	if err != nil {
+		t.Errorf("Response body is an invalid About format, was: `%s`", aboutResponseString)
+	}
+
+	assertDefaultAboutResponse(t, testAboutResponse)
+	assertEmptyVersionResponse(t, testAboutResponse)
+
+	// TODO: COMPLETE TEST
 }
 
 func assertEqualAboutData(t *testing.T, aboutResponse AboutResponse, customData map[string]interface{}, serviceId string) {
