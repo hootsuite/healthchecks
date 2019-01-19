@@ -188,6 +188,7 @@ func About(
 	case APIV2:
 		return aboutV2(statusEndpoints, protocol, aboutFilePath, versionFilePath, customData, checkStatus)
 	}
+	// should never reach here
 	return ""
 }
 
