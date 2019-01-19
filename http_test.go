@@ -31,8 +31,8 @@ func TestHttpAmIUpV2(t *testing.T) {
 	handler.ServeHTTP(w, req)
 
 	assertStatusCode(http.StatusOK, t, w)
-	assertContentTypeHeader("text/plain; charset=utf-8", t, w)
-	assertBody("{}", t, w)
+	assertContentTypeHeader("application/json; charset=utf-8", t, w)
+	assertBody(`{"description":"Am I Up","result":"OK","details":"The service is running"}`, t, w)
 }
 
 func TestHttpAbout(t *testing.T) {

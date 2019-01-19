@@ -59,17 +59,21 @@ type TraverseCheck interface {
 }
 
 func SerializeStatusList(s StatusList, apiVersion int) string {
-	statusListJSONResponse := translateStatusList(s)
-
 	if apiVersion == APIV2 {
-		statusListJSON, err := json.Marshal(statusListJSONResponse[1])
+		statusListJSONResponse := translateStatusListV2(s)
+
+		statusListJSON, err := json.Marshal(statusListJSONResponse)
 		if err != nil {
 			details := fmt.Sprintf("Error serializing StatusList: %v error: %s apiVersion: %v", s, err, apiVersion)
 			fmt.Print(details)
 			return fmt.Sprintf(`{"description":"Invalid StatusList","result":"CRIT","details":"%s"}`, details)
 		}
+
 		return string(statusListJSON)
+
 	}
+
+	statusListJSONResponse := translateStatusList(s)
 
 	statusListJSON, err := json.Marshal(statusListJSONResponse)
 	if err != nil {
