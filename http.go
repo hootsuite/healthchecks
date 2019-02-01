@@ -136,7 +136,7 @@ func handleV2Api(
 			io.WriteString(w, SerializeStatusList(StatusList{
 				StatusList: []Status{
 					{
-						Description: "Unknown  Status endpoint",
+						Description: "Unknown status endpoint",
 						Result:      CRITICAL,
 						Details:     fmt.Sprintf("Status endpoint does not exist: %s", r.URL.Path),
 					},
