@@ -123,7 +123,7 @@ func translateStatusListV2(s StatusList) JsonResponse {
 	return s.StatusList[0]
 }
 
-func ExecuteStatusCheck(s *StatusEndpoint, apiVersion int) string {
+func ExecuteStatusCheck(s *StatusEndpoint, apiVersion APIVersion) string {
 	result := s.StatusCheck.CheckStatus(s.Name)
 	return SerializeStatusList(result, apiVersion)
 }

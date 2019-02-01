@@ -128,7 +128,7 @@ func TestHttpAggregateV2(t *testing.T) {
 	aggregateHandler.ServeHTTP(w, req)
 
 	assertSuccessfulJSONResponse(t, w)
-	assertBody(`{"description":"Aggregate Check","result":"OK","details":""}`, t, w)
+	assertBody(`{"description":"Aggregate Check","result":"OK","details":"All checks are OK"}`, t, w)
 }
 
 func TestHttpInvalidEndpoint(t *testing.T) {

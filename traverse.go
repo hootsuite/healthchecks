@@ -15,7 +15,8 @@ func Traverse(s []StatusEndpoint, dependencies []string, action string, protocol
 		// run the action
 		switch action {
 		case "about":
-			return About(s, protocol, aboutFilePath, versionFilePath, customData, APIV1, true)
+			aboutResp, _ := About(s, protocol, aboutFilePath, versionFilePath, customData, APIV1, true)
+			return aboutResp
 		default:
 			sl := StatusList{
 				StatusList: []Status{

@@ -8,7 +8,7 @@ import (
 )
 
 func TestAboutResponse(t *testing.T) {
-	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about.json", "test/version.txt", emptyCustomData, APIV1, true)
+	aboutResponseString, _ := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about.json", "test/version.txt", emptyCustomData, APIV1, true)
 
 	testAboutResponse := AboutResponse{}
 	err := json.Unmarshal([]byte(aboutResponseString), &testAboutResponse)
@@ -20,7 +20,7 @@ func TestAboutResponse(t *testing.T) {
 }
 
 func TestAboutEmptyAboutData(t *testing.T) {
-	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "", "", emptyCustomData, APIV1, true)
+	aboutResponseString, _ := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "", "", emptyCustomData, APIV1, true)
 
 	testAboutResponse := AboutResponse{}
 	err := json.Unmarshal([]byte(aboutResponseString), &testAboutResponse)
@@ -37,7 +37,7 @@ func TestAboutEmptyAboutData(t *testing.T) {
 }
 
 func TestAboutFieldMissingAboutData(t *testing.T) {
-	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/service-id-field-missing.json", "test/version.txt", emptyCustomData, APIV1, true)
+	aboutResponseString, _ := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/service-id-field-missing.json", "test/version.txt", emptyCustomData, APIV1, true)
 
 	testAboutResponse := AboutResponse{}
 	err := json.Unmarshal([]byte(aboutResponseString), &testAboutResponse)
@@ -50,7 +50,7 @@ func TestAboutFieldMissingAboutData(t *testing.T) {
 
 func TestAboutCustomData(t *testing.T) {
 	serviceCustomData := make(map[string]interface{})
-	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about-custom.json", "test/version.txt", serviceCustomData, APIV1, true)
+	aboutResponseString, _ := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about-custom.json", "test/version.txt", serviceCustomData, APIV1, true)
 
 	testAboutResponse := AboutResponse{}
 	err := json.Unmarshal([]byte(aboutResponseString), &testAboutResponse)
@@ -67,7 +67,7 @@ func TestAboutServiceCustomData(t *testing.T) {
 	serviceCustomData = make(map[string]interface{})
 	serviceCustomData["some-key"] = "some-value"
 
-	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about.json", "test/version.txt", serviceCustomData, APIV1, true)
+	aboutResponseString, _ := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about.json", "test/version.txt", serviceCustomData, APIV1, true)
 
 	testAboutResponse := AboutResponse{}
 	err := json.Unmarshal([]byte(aboutResponseString), &testAboutResponse)
@@ -90,7 +90,7 @@ func TestAboutServiceOverwritesCustomData(t *testing.T) {
 	serviceCustomData["custom4"] = serviceCustom4
 	serviceCustomData["custom5"] = true
 
-	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about-custom.json", "test/version.txt", serviceCustomData, APIV1, true)
+	aboutResponseString, _ := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about-custom.json", "test/version.txt", serviceCustomData, APIV1, true)
 
 	testAboutResponse := AboutResponse{}
 	err := json.Unmarshal([]byte(aboutResponseString), &testAboutResponse)
@@ -114,7 +114,7 @@ func TestAboutServiceOverwritesCustomData(t *testing.T) {
 }
 
 func TestAboutDoesNotCheckStatus(t *testing.T) {
-	aboutResponseString := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "", "", emptyCustomData, APIV2, false)
+	aboutResponseString, _ := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "", "", emptyCustomData, APIV2, false)
 
 	testAboutResponse := AboutResponse{}
 	err := json.Unmarshal([]byte(aboutResponseString), &testAboutResponse)
