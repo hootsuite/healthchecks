@@ -44,7 +44,8 @@ func handleV1Api(
 	switch endpoint {
 	case "about":
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		io.WriteString(w, About(statusEndpoints, ABOUT_PROTOCOL_HTTP, aboutFilePath, versionFilePath, customData, APIV1, true))
+		aboutResp, _ := About(statusEndpoints, ABOUT_PROTOCOL_HTTP, aboutFilePath, versionFilePath, customData, APIV1, true)
+		io.WriteString(w, aboutResp)
 	case "aggregate":
 		typeFilter := r.URL.Query().Get("type")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -104,7 +105,8 @@ func handleV2Api(
 			checkStatus, _ = strconv.ParseBool(checkStatusStr)
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		io.WriteString(w, About(statusEndpoints, ABOUT_PROTOCOL_HTTP, aboutFilePath, versionFilePath, customData, APIV2, checkStatus))
+		aboutResp, _ := About(statusEndpoints, ABOUT_PROTOCOL_HTTP, aboutFilePath, versionFilePath, customData, APIV2, checkStatus)
+		io.WriteString(w, aboutResp)
 	case "aggregate":
 		typeFilter := r.URL.Query().Get("type")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")

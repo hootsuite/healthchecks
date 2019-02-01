@@ -7,7 +7,7 @@ import (
 // Execute all statusEndpoint StatusCheck() functions asynchronously and return the
 // overall status by returning the highest severity item in the following order:
 // CRIT, WARN, OK
-func Aggregate(statusEndpoints []StatusEndpoint, typeFilter string, apiVersion int) string {
+func Aggregate(statusEndpoints []StatusEndpoint, typeFilter string, apiVersion APIVersion) string {
 
 	if len(typeFilter) > 0 {
 		if typeFilter != "internal" && typeFilter != "external" {

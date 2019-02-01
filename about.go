@@ -2,6 +2,7 @@ package healthchecks
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -153,17 +154,17 @@ func About(
 	protocol string, aboutFilePath string,
 	versionFilePath string,
 	customData map[string]interface{},
-	apiVersion int,
+	apiVersion APIVersion,
 	checkStatus bool,
-) string {
+) (string, error) {
 	switch apiVersion {
 	case APIV1:
-		return aboutV1(statusEndpoints, protocol, aboutFilePath, versionFilePath, customData)
+		return aboutV1(statusEndpoints, protocol, aboutFilePath, versionFilePath, customData), nil
 	case APIV2:
-		return aboutV2(statusEndpoints, protocol, aboutFilePath, versionFilePath, customData, checkStatus)
+		return aboutV2(statusEndpoints, protocol, aboutFilePath, versionFilePath, customData, checkStatus), nil
+	default:
+		return "", errors.New("Invalid API Version")
 	}
-	// should never reach here
-	return ""
 }
 
 func aboutV1(

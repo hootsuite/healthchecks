@@ -58,7 +58,7 @@ type TraverseCheck interface {
 	Traverse(traversalPath []string, action string) (string, error)
 }
 
-func SerializeStatusList(s StatusList, apiVersion int) string {
+func SerializeStatusList(s StatusList, apiVersion APIVersion) string {
 	if apiVersion == APIV2 {
 		statusListJSONResponse := translateStatusListV2(s)
 
