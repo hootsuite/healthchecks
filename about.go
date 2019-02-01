@@ -56,7 +56,7 @@ type AboutResponseV2 struct {
 	ProjectHome  string                 `json:"projectHome"`
 	LogsLinks    []string               `json:"logsLinks"`
 	StatsLinks   []string               `json:"statsLinks"`
-	Dependencies []DependencyV2         `json:"dependencies"`
+	Dependencies []DependencyInfo       `json:"dependencies"`
 	CustomData   map[string]interface{} `json:"customData"`
 }
 
@@ -69,7 +69,7 @@ type Dependency struct {
 	IsTraversable  bool           `json:"isTraversable"`
 }
 
-type DependencyV2 struct {
+type DependencyInfo struct {
 	Name           string       `json:"name"`
 	Status         JsonResponse `json:"status"`
 	StatusDuration float64      `json:"statusDuration"`
@@ -83,8 +83,8 @@ type dependencyPosition struct {
 	position int
 }
 
-type dependencyPositionV2 struct {
-	item     DependencyV2
+type dependencyInfoPosition struct {
+	item     DependencyInfo
 	position int
 }
 
@@ -146,32 +146,6 @@ func getAboutCustomDataFieldValues(aboutConfigMap map[string]interface{}, aboutF
 	}
 
 	return mapValue
-}
-
-func statusEndpointsToDependencies(statusEndpoints []StatusEndpoint) []Dependency {
-	dependencies := make([]Dependency, len(statusEndpoints))
-	for _, statusEndpoint := range statusEndpoints {
-		dependencies = append(dependencies, Dependency{
-			Name:          statusEndpoint.Name,
-			StatusPath:    statusEndpoint.Slug,
-			Type:          statusEndpoint.Type,
-			IsTraversable: statusEndpoint.IsTraversable,
-		})
-	}
-	return dependencies
-}
-
-func statusEndpointsToDependenciesV2(statusEndpoints []StatusEndpoint) []Dependency {
-	dependencies := make([]Dependency, len(statusEndpoints))
-	for _, statusEndpoint := range statusEndpoints {
-		dependencies = append(dependencies, Dependency{
-			Name:          statusEndpoint.Name,
-			StatusPath:    statusEndpoint.Slug,
-			Type:          statusEndpoint.Type,
-			IsTraversable: statusEndpoint.IsTraversable,
-		})
-	}
-	return dependencies
 }
 
 func About(
@@ -414,11 +388,11 @@ func aboutV2(
 		CustomData:  aboutConfig.CustomData,
 	}
 
-	dependencies := make([]DependencyV2, len(statusEndpoints))
+	dependencies := make([]DependencyInfo, len(statusEndpoints))
 	if checkStatus {
 		// Execute status checks async
 		var wg sync.WaitGroup
-		dc := make(chan dependencyPositionV2)
+		dc := make(chan dependencyInfoPosition)
 		wg.Add(len(statusEndpoints))
 
 		for ie, se := range statusEndpoints {
@@ -426,7 +400,7 @@ func aboutV2(
 				start := time.Now()
 				dependencyStatus := translateStatusListV2(s.StatusCheck.CheckStatus(s.Name))
 				elapsed := float64(time.Since(start)) * 0.000000001
-				dependency := DependencyV2{
+				dependency := DependencyInfo{
 					Name:           s.Name,
 					Status:         dependencyStatus,
 					StatusDuration: elapsed,
@@ -435,7 +409,7 @@ func aboutV2(
 					IsTraversable:  s.IsTraversable,
 				}
 
-				dc <- dependencyPositionV2{
+				dc <- dependencyInfoPosition{
 					item:     dependency,
 					position: i,
 				}
@@ -455,7 +429,7 @@ func aboutV2(
 		close(dc)
 	} else {
 		for _, statusEndpoint := range statusEndpoints {
-			dependencies = append(dependencies, DependencyV2{
+			dependencies = append(dependencies, DependencyInfo{
 				Name:          statusEndpoint.Name,
 				StatusPath:    statusEndpoint.Slug,
 				Type:          statusEndpoint.Type,

@@ -19,7 +19,7 @@ func HandlerFunc(statusEndpoints []StatusEndpoint, aboutFilePath string, version
 		slug := strings.Split(r.URL.Path, "/")
 
 		apiVersion := APIV1
-		if slug[2] == "v2" {
+		if strings.ToLower(slug[2]) == "v2" {
 			apiVersion = APIV2
 		}
 
