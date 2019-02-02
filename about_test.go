@@ -19,6 +19,17 @@ func TestAboutResponse(t *testing.T) {
 	assertEqualAboutData(t, testAboutResponse, emptyCustomData, defaultServiceId)
 }
 
+func TestAboutResponseV2(t *testing.T) {
+	aboutResponseV2, _ := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about.json", "test/version.txt", emptyCustomData, APIV2, true)
+	testAboutResponseV2 := AboutResponseV2{}
+	err := json.Unmarshal([]byte(aboutResponseV2), &testAboutResponseV2)
+	if err != nil {
+		t.Errorf("Response body is an invalid About format, was: `%s`", aboutResponseV2)
+	}
+
+	assertEqualAboutV2Data(t, testAboutResponseV2, emptyCustomData, defaultServiceId)
+}
+
 func TestAboutEmptyAboutData(t *testing.T) {
 	aboutResponseString, _ := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "", "", emptyCustomData, APIV1, true)
 
@@ -128,6 +139,27 @@ func TestAboutDoesNotCheckStatus(t *testing.T) {
 	// TODO: COMPLETE TEST
 }
 
+func assertEqualAboutV2Data(t *testing.T, aboutResponse AboutResponseV2, customData map[string]interface{}, serviceId string) {
+	assert.Equal(t, aboutResponse.Id, serviceId)
+	assert.Equal(t, aboutResponse.Name, "Test Service")
+	assert.Equal(t, aboutResponse.Description, "A test service")
+	assert.Equal(t, aboutResponse.Owners[0], "Test1 Testerson <test1.testerson@hootsuite.com>")
+	assert.Equal(t, aboutResponse.Owners[1], "Test2 Testerson <test2.testerson@hootsuite.com>")
+	assert.Equal(t, aboutResponse.ProjectHome, "https://home.com/hootsuite/test-service")
+	assert.Equal(t, aboutResponse.ProjectRepo, "https://github.com/hootsuite/test-service")
+	assert.Equal(t, aboutResponse.LogsLinks[0], "https://logging.com/hootsuite/test-service-1")
+	assert.Equal(t, aboutResponse.LogsLinks[1], "https://logging.com/hootsuite/test-service-2")
+	assert.Equal(t, aboutResponse.StatsLinks[0], "https://stats.com/hootsuite/test-service-1")
+	assert.Equal(t, aboutResponse.StatsLinks[1], "https://stats.com/hootsuite/test-service-2")
+	assert.Equal(t, aboutResponse.Protocol, "http")
+	assert.Equal(t, aboutResponse.CustomData, customData)
+
+	assert.Len(t, aboutResponse.Dependencies, 3)
+	assertEqualAboutDependencyInfo(t, aboutResponse.Dependencies[0], testStatusEndpointA)
+	assertEqualAboutDependencyInfo(t, aboutResponse.Dependencies[1], testStatusEndpointB)
+	assertEqualAboutDependencyInfo(t, aboutResponse.Dependencies[2], testStatusEndpointC)
+}
+
 func assertEqualAboutData(t *testing.T, aboutResponse AboutResponse, customData map[string]interface{}, serviceId string) {
 	assert.Equal(t, aboutResponse.Id, serviceId)
 	assert.Equal(t, aboutResponse.Name, "Test Service")
@@ -152,6 +184,14 @@ func assertEqualAboutData(t *testing.T, aboutResponse AboutResponse, customData 
 func assertEqualAboutDependency(t *testing.T, dependency Dependency, statusEndpoint StatusEndpoint) {
 	assert.Equal(t, statusEndpoint.Name, dependency.Name)
 	assert.Equal(t, statusEndpoint.IsTraversable, dependency.IsTraversable)
+	assert.Equal(t, statusEndpoint.Slug, dependency.StatusPath)
+	assert.Equal(t, statusEndpoint.Type, dependency.Type)
+	assert.True(t, dependency.StatusDuration > 0)
+	assert.NotEmpty(t, dependency.Status)
+}
+
+func assertEqualAboutDependencyInfo(t *testing.T, dependency DependencyInfo, statusEndpoint StatusEndpoint) {
+	assert.Equal(t, statusEndpoint.Name, dependency.Name)
 	assert.Equal(t, statusEndpoint.Slug, dependency.StatusPath)
 	assert.Equal(t, statusEndpoint.Type, dependency.Type)
 	assert.True(t, dependency.StatusDuration > 0)
