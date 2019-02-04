@@ -27,7 +27,18 @@ func TestAboutResponseV2(t *testing.T) {
 		t.Errorf("Response body is an invalid About format, was: `%s`", aboutResponseV2)
 	}
 
-	assertEqualAboutV2Data(t, testAboutResponseV2, emptyCustomData, defaultServiceId)
+	assertEqualAboutV2Data(t, testAboutResponseV2, emptyCustomData, defaultServiceId, true)
+}
+
+func TestAboutResponseV2CheckStatusFalse(t *testing.T) {
+	aboutResponseV2, _ := About(testStatusEndpoints, ABOUT_PROTOCOL_HTTP, "test/about.json", "test/version.txt", emptyCustomData, APIV2, false)
+	testAboutResponseV2 := AboutResponseV2{}
+	err := json.Unmarshal([]byte(aboutResponseV2), &testAboutResponseV2)
+	if err != nil {
+		t.Errorf("Response body is an invalid About format, was: `%s`", aboutResponseV2)
+	}
+
+	assertEqualAboutV2Data(t, testAboutResponseV2, emptyCustomData, defaultServiceId, false)
 }
 
 func TestAboutEmptyAboutData(t *testing.T) {
@@ -139,7 +150,7 @@ func TestAboutDoesNotCheckStatus(t *testing.T) {
 	// TODO: COMPLETE TEST
 }
 
-func assertEqualAboutV2Data(t *testing.T, aboutResponse AboutResponseV2, customData map[string]interface{}, serviceId string) {
+func assertEqualAboutV2Data(t *testing.T, aboutResponse AboutResponseV2, customData map[string]interface{}, serviceId string, checkStatus bool) {
 	assert.Equal(t, aboutResponse.Id, serviceId)
 	assert.Equal(t, aboutResponse.Name, "Test Service")
 	assert.Equal(t, aboutResponse.Description, "A test service")
@@ -155,9 +166,9 @@ func assertEqualAboutV2Data(t *testing.T, aboutResponse AboutResponseV2, customD
 	assert.Equal(t, aboutResponse.CustomData, customData)
 
 	assert.Len(t, aboutResponse.Dependencies, 3)
-	assertEqualAboutDependencyInfo(t, aboutResponse.Dependencies[0], testStatusEndpointA)
-	assertEqualAboutDependencyInfo(t, aboutResponse.Dependencies[1], testStatusEndpointB)
-	assertEqualAboutDependencyInfo(t, aboutResponse.Dependencies[2], testStatusEndpointC)
+	assertEqualAboutDependencyInfo(t, aboutResponse.Dependencies[0], testStatusEndpointA, checkStatus)
+	assertEqualAboutDependencyInfo(t, aboutResponse.Dependencies[1], testStatusEndpointB, checkStatus)
+	assertEqualAboutDependencyInfo(t, aboutResponse.Dependencies[2], testStatusEndpointC, checkStatus)
 }
 
 func assertEqualAboutData(t *testing.T, aboutResponse AboutResponse, customData map[string]interface{}, serviceId string) {
@@ -190,12 +201,17 @@ func assertEqualAboutDependency(t *testing.T, dependency Dependency, statusEndpo
 	assert.NotEmpty(t, dependency.Status)
 }
 
-func assertEqualAboutDependencyInfo(t *testing.T, dependency DependencyInfo, statusEndpoint StatusEndpoint) {
+func assertEqualAboutDependencyInfo(t *testing.T, dependency DependencyInfo, statusEndpoint StatusEndpoint, checkStatus bool) {
 	assert.Equal(t, statusEndpoint.Name, dependency.Name)
 	assert.Equal(t, statusEndpoint.Slug, dependency.StatusPath)
 	assert.Equal(t, statusEndpoint.Type, dependency.Type)
-	assert.True(t, dependency.StatusDuration > 0)
-	assert.NotEmpty(t, dependency.Status)
+	if checkStatus {
+		assert.True(t, dependency.StatusDuration > 0)
+		assert.NotEmpty(t, dependency.Status)
+	} else {
+		assert.True(t, dependency.StatusDuration == 0)
+		assert.Empty(t, dependency.Status)
+	}
 }
 
 func assertDefaultAboutResponse(t *testing.T, response AboutResponse) {
