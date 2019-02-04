@@ -47,7 +47,7 @@ type StatusCheck interface {
 type JsonResponse interface {
 }
 
-// Enables a traversal in the service graph.
+// TraverseCheck enables a traversal in the service graph.
 type TraverseCheck interface {
 	/* Traverse to the next level in the service graph. This function should be implemented by
 	   SDKs or clients that want to enable service traversal.
@@ -58,16 +58,31 @@ type TraverseCheck interface {
 	Traverse(traversalPath []string, action string) (string, error)
 }
 
-func SerializeStatusList(s StatusList) string {
-	statusListJsonResponse := translateStatusList(s)
-	statusListJson, err := json.Marshal(statusListJsonResponse)
+func SerializeStatusList(s StatusList, apiVersion APIVersion) string {
+	if apiVersion == APIV2 {
+		statusListJSONResponse := translateStatusListV2(s)
+
+		statusListJSON, err := json.Marshal(statusListJSONResponse)
+		if err != nil {
+			details := fmt.Sprintf("Error serializing StatusList: %v error: %s apiVersion: %v", s, err, apiVersion)
+			fmt.Print(details)
+			return fmt.Sprintf(`{"description":"Invalid StatusList","result":"CRIT","details":"%s"}`, details)
+		}
+
+		return string(statusListJSON)
+
+	}
+
+	statusListJSONResponse := translateStatusList(s)
+
+	statusListJSON, err := json.Marshal(statusListJSONResponse)
 	if err != nil {
-		details := fmt.Sprintf("Error serializing StatusList: %v error: %s", s, err)
+		details := fmt.Sprintf("Error serializing StatusList: %v error: %s apiVersion: %v", s, err, apiVersion)
 		fmt.Print(details)
 		return fmt.Sprintf(`["CRIT",{"description":"Invalid StatusList","result":"CRIT","details":"%s"}]`, details)
 	}
 
-	return string(statusListJson)
+	return string(statusListJSON)
 }
 
 func translateStatusList(s StatusList) []JsonResponse {
@@ -88,17 +103,29 @@ func translateStatusList(s StatusList) []JsonResponse {
 		return []JsonResponse{
 			OK,
 		}
-	} else {
-		return []JsonResponse{
-			r.Result,
-			r,
-		}
+	}
+
+	return []JsonResponse{
+		r.Result,
+		r,
 	}
 }
 
-func ExecuteStatusCheck(s *StatusEndpoint) string {
+func translateStatusListV2(s StatusList) JsonResponse {
+	if len(s.StatusList) <= 0 {
+		return Status{
+			Description: "Invalid status response",
+			Result:      CRITICAL,
+			Details:     "StatusList empty",
+		}
+	}
+
+	return s.StatusList[0]
+}
+
+func ExecuteStatusCheck(s *StatusEndpoint, apiVersion APIVersion) string {
 	result := s.StatusCheck.CheckStatus(s.Name)
-	return SerializeStatusList(result)
+	return SerializeStatusList(result, apiVersion)
 }
 
 // Find the StatusEndpoint given the slug (aka Status Path) to search for.

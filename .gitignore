@@ -9,6 +9,7 @@ _test
 build
 src
 .idea
+.vscode
 
 # Architecture specific extensions/prefixes
 *.[568vq]

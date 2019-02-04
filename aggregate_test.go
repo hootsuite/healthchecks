@@ -24,8 +24,35 @@ func TestAggregateOK(t *testing.T) {
 		},
 	}
 
-	aggregateResponse := Aggregate(statusEndpoints, "")
+	aggregateResponse := Aggregate(statusEndpoints, "", APIV1)
 	expected := `["OK"]`
+	if aggregateResponse != expected {
+		t.Errorf("Response body should be `%s`, was: `%s`", expected, aggregateResponse)
+	}
+}
+
+func TestAggregateV2OK(t *testing.T) {
+	statusEndpoints := []StatusEndpoint{
+		{
+			Name:          "AAA",
+			Slug:          "aaa",
+			Type:          "internal",
+			IsTraversable: false,
+			StatusCheck:   MockStatusChecker{"AAA", OK, "all good"},
+			TraverseCheck: nil,
+		},
+		{
+			Name:          "BBB",
+			Slug:          "bbb",
+			Type:          "internal",
+			IsTraversable: false,
+			StatusCheck:   MockStatusChecker{"BBB", OK, "all good"},
+			TraverseCheck: nil,
+		},
+	}
+
+	aggregateResponse := Aggregate(statusEndpoints, "", APIV2)
+	expected := `{"description":"Aggregate Check","result":"OK","details":"All checks are OK"}`
 	if aggregateResponse != expected {
 		t.Errorf("Response body should be `%s`, was: `%s`", expected, aggregateResponse)
 	}
@@ -59,8 +86,43 @@ func TestAggregateCRIT(t *testing.T) {
 		},
 	}
 
-	aggregateResponse := Aggregate(statusEndpoints, "")
+	aggregateResponse := Aggregate(statusEndpoints, "", APIV1)
 	expected := `["CRIT",{"description":"BBB","result":"CRIT","details":"explosion"}]`
+	if aggregateResponse != expected {
+		t.Errorf("Response body should be `%s`, was: `%s`", expected, aggregateResponse)
+	}
+}
+
+func TestAggregateV2CRIT(t *testing.T) {
+	statusEndpoints := []StatusEndpoint{
+		{
+			Name:          "AAA",
+			Slug:          "aaa",
+			Type:          "internal",
+			IsTraversable: false,
+			StatusCheck:   MockStatusChecker{"AAA", OK, "all good"},
+			TraverseCheck: nil,
+		},
+		{
+			Name:          "BBB",
+			Slug:          "bbb",
+			Type:          "internal",
+			IsTraversable: false,
+			StatusCheck:   MockStatusChecker{"BBB", CRITICAL, "explosion"},
+			TraverseCheck: nil,
+		},
+		{
+			Name:          "CCC",
+			Slug:          "ccc",
+			Type:          "internal",
+			IsTraversable: false,
+			StatusCheck:   MockStatusChecker{"CCC", WARNING, "warning"},
+			TraverseCheck: nil,
+		},
+	}
+
+	aggregateResponse := Aggregate(statusEndpoints, "", APIV2)
+	expected := `{"description":"BBB","result":"CRIT","details":"explosion"}`
 	if aggregateResponse != expected {
 		t.Errorf("Response body should be `%s`, was: `%s`", expected, aggregateResponse)
 	}
@@ -94,13 +156,47 @@ func TestAggregateWARN(t *testing.T) {
 		},
 	}
 
-	aggregateResponse := Aggregate(statusEndpoints, "")
+	aggregateResponse := Aggregate(statusEndpoints, "", APIV1)
 	expected := `["WARN",{"description":"BBB","result":"WARN","details":"this is a warning"}]`
 	if aggregateResponse != expected {
 		t.Errorf("Response body should be `%s`, was: `%s`", expected, aggregateResponse)
 	}
 }
 
+func TestAggregateV2WARN(t *testing.T) {
+	statusEndpoints := []StatusEndpoint{
+		{
+			Name:          "AAA",
+			Slug:          "aaa",
+			Type:          "internal",
+			IsTraversable: false,
+			StatusCheck:   MockStatusChecker{"AAA", OK, "all good"},
+			TraverseCheck: nil,
+		},
+		{
+			Name:          "BBB",
+			Slug:          "bbb",
+			Type:          "internal",
+			IsTraversable: false,
+			StatusCheck:   MockStatusChecker{"BBB", WARNING, "this is a warning"},
+			TraverseCheck: nil,
+		},
+		{
+			Name:          "CCC",
+			Slug:          "ccc",
+			Type:          "internal",
+			IsTraversable: false,
+			StatusCheck:   MockStatusChecker{"CCC", OK, "all good"},
+			TraverseCheck: nil,
+		},
+	}
+
+	aggregateResponse := Aggregate(statusEndpoints, "", APIV2)
+	expected := `{"description":"BBB","result":"WARN","details":"this is a warning"}`
+	if aggregateResponse != expected {
+		t.Errorf("Response body should be `%s`, was: `%s`", expected, aggregateResponse)
+	}
+}
 func TestAggregateInvalidType(t *testing.T) {
 	statusEndpoints := []StatusEndpoint{
 		{
@@ -113,7 +209,7 @@ func TestAggregateInvalidType(t *testing.T) {
 		},
 	}
 
-	aggregateResponse := Aggregate(statusEndpoints, "something")
+	aggregateResponse := Aggregate(statusEndpoints, "something", APIV1)
 	expected := `["CRIT",{"description":"Invalid type","result":"CRIT","details":"Unknown check type given for aggregate check"}]`
 	if aggregateResponse != expected {
 		t.Errorf("Response body should be `%s`, was: `%s`", expected, aggregateResponse)
@@ -140,7 +236,7 @@ func TestAggregateInternalType(t *testing.T) {
 		},
 	}
 
-	aggregateResponse := Aggregate(statusEndpoints, "internal")
+	aggregateResponse := Aggregate(statusEndpoints, "internal", APIV1)
 	expected := `["OK"]`
 	if aggregateResponse != expected {
 		t.Errorf("Response body should be `%s`, was: `%s`", expected, aggregateResponse)
@@ -167,7 +263,7 @@ func TestAggregateExternalType(t *testing.T) {
 		},
 	}
 
-	aggregateResponse := Aggregate(statusEndpoints, "external")
+	aggregateResponse := Aggregate(statusEndpoints, "external", APIV1)
 	expected := `["OK"]`
 	if aggregateResponse != expected {
 		t.Errorf("Response body should be `%s`, was: `%s`", expected, aggregateResponse)
