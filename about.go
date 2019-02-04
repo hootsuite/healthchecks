@@ -429,13 +429,13 @@ func aboutV2(
 		wg.Wait()
 		close(dc)
 	} else {
-		for _, statusEndpoint := range statusEndpoints {
-			dependencies = append(dependencies, DependencyInfo{
+		for index, statusEndpoint := range statusEndpoints {
+			dependencies[index] = DependencyInfo{
 				Name:          statusEndpoint.Name,
 				StatusPath:    statusEndpoint.Slug,
 				Type:          statusEndpoint.Type,
 				IsTraversable: statusEndpoint.IsTraversable,
-			})
+			}
 		}
 	}
 
