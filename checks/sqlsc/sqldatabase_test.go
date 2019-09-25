@@ -2,10 +2,10 @@ package sqlsc
 
 import (
 	"fmt"
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/hootsuite/healthchecks"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/hootsuite/healthchecks"
-	"gopkg.in/DATA-DOG/go-sqlmock.v1"
 	"testing"
 )
 

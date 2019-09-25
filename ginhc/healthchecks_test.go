@@ -170,7 +170,7 @@ func assertContentTypeHeader(expectedHeader string, t *testing.T, w *httptest.Re
 
 func assertStatusCode(expectedStatusCode int, t *testing.T, w *httptest.ResponseRecorder) {
 	if w.Code != expectedStatusCode {
-		t.Errorf("Content-Type should be `%s`, was: %s", expectedStatusCode, w.Code)
+		t.Errorf("Content-Type should be `%d`, was: %d", expectedStatusCode, w.Code)
 	}
 }
 
