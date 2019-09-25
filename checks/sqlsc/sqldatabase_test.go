@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/hootsuite/healthchecks"
-	"gopkg.in/DATA-DOG/go-sqlmock.v1"
+	"gopkg.in/DATA-DOG/go-sqlmock.v1.3.3"
 	"testing"
 )
 
