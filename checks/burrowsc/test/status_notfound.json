@@ -1,0 +1,9 @@
+{
+  "status": {
+    "cluster": "cluster1",
+    "group": "group1",
+    "status": "NOTFOUND",
+    "partitions": [],
+    "totallag": 0
+  }
+}

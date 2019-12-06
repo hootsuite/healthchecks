@@ -1,0 +1,20 @@
+{
+  "status": {
+    "cluster": "cluster1",
+    "group": "group1",
+    "status": "OK",
+    "partitions": [
+      {
+        "topic": "topic1",
+        "status": "OK",
+        "current_lag": 2
+      },
+      {
+        "topic": "topic2",
+        "status": "OK",
+        "current_lag": 11
+      }
+    ],
+    "totallag": 13
+  }
+}
