@@ -12,12 +12,12 @@ import (
 
 // Burrow consumer group and partition statuses (https://github.com/linkedin/Burrow/wiki/http-request-consumer-group-status)
 const (
-	ok       = "OK"
-	warn     = "WARN"
-	err      = "ERR"
-	stop     = "STOP"
-	stall    = "STALL"
-	notfound = "NOTFOUND"
+	statusOK       = "OK"
+	statusWarn     = "WARN"
+	statusErr      = "ERR"
+	statusStop     = "STOP"
+	statusStall    = "STALL"
+	statusNotFound = "NOTFOUND"
 )
 
 type lagResponse struct {
@@ -206,11 +206,11 @@ func getAlertLevel(status string) healthchecks.AlertLevel {
 	var alertLevel healthchecks.AlertLevel
 
 	switch status {
-	case ok:
+	case statusOK:
 		alertLevel = healthchecks.OK
-	case warn, notfound:
+	case statusWarn, statusNotFound:
 		alertLevel = healthchecks.WARNING
-	case err, stop, stall:
+	case statusErr, statusStop, statusStall:
 		alertLevel = healthchecks.CRITICAL
 	default:
 		alertLevel = healthchecks.WARNING
