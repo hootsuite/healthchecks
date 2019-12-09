@@ -12,36 +12,36 @@ import (
 
 // Burrow consumer group and partition statuses (https://github.com/linkedin/Burrow/wiki/http-request-consumer-group-status)
 const (
-	OK       = "OK"
-	WARN     = "WARN"
-	ERR      = "ERR"
-	STOP     = "STOP"
-	STALL    = "STALL"
-	NOTFOUND = "NOTFOUND"
+	ok       = "OK"
+	warn     = "WARN"
+	err      = "ERR"
+	stop     = "STOP"
+	stall    = "STALL"
+	notfound = "NOTFOUND"
 )
 
-type LagResponse struct {
+type lagResponse struct {
 	Error     bool      `json:"error"`
 	Message   string    `json:"message"`
-	LagStatus LagStatus `json:"status"`
+	LagStatus lagStatus `json:"status"`
 	Request   struct {
 		URL  string `json:"url"`
 		Host string `json:"host"`
 	} `json:"request"`
 }
 
-type LagStatus struct {
+type lagStatus struct {
 	Cluster        string      `json:"cluster"`
 	Group          string      `json:"group"`
 	Status         string      `json:"status"`
 	Complete       float64     `json:"complete"`
-	Partitions     []Partition `json:"partitions"`
+	Partitions     []partition `json:"partitions"`
 	PartitionCount int         `json:"partition_count"`
-	MaxLag         Partition   `json:"maxlag"`
+	MaxLag         partition   `json:"maxlag"`
 	TotalLag       int64       `json:"totallag"`
 }
 
-type Partition struct {
+type partition struct {
 	Topic     string `json:"topic"`
 	Partition int    `json:"partition"`
 	Owner     string `json:"owner"`
@@ -116,7 +116,7 @@ func (b BurrowStatusChecker) CheckStatus(name string) healthchecks.StatusList {
 		}
 	}
 
-	lagResponse := LagResponse{}
+	lagResponse := lagResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&lagResponse)
 	if err != nil {
 		return healthchecks.StatusList{
@@ -136,21 +136,26 @@ func (b BurrowStatusChecker) CheckStatus(name string) healthchecks.StatusList {
 	// If topic is nil, check the status of the entire consumer group instead of a specific partition
 	if b.Topic == nil {
 		s = checkGroupStatus(name, lagStatus, b.CriticalLagThreshold)
-	} else {
-		for _, partition := range lagStatus.Partitions {
-			if partition.Topic == *b.Topic {
-				s = checkPartitionStatus(name, lagStatus, partition, b.CriticalLagThreshold)
-				break
-			}
+		return healthchecks.StatusList{
+			StatusList: []healthchecks.Status{
+				*s,
+			},
 		}
+	}
 
-		// Topic was not found in consumer group partitions
-		if s == nil {
-			s = &healthchecks.Status{
-				Description: name,
-				Result:      healthchecks.WARNING,
-				Details:     fmt.Sprintf("Topic %s not found in group %s on cluster %s", *b.Topic, b.ConsumerGroup, b.Cluster),
-			}
+	for _, partition := range lagStatus.Partitions {
+		if partition.Topic == *b.Topic {
+			s = checkPartitionStatus(name, lagStatus, partition, b.CriticalLagThreshold)
+			break
+		}
+	}
+
+	// Topic was not found in consumer group partitions
+	if s == nil {
+		s = &healthchecks.Status{
+			Description: name,
+			Result:      healthchecks.WARNING,
+			Details:     fmt.Sprintf("Topic %s not found in group %s on cluster %s", *b.Topic, b.ConsumerGroup, b.Cluster),
 		}
 	}
 
@@ -161,7 +166,7 @@ func (b BurrowStatusChecker) CheckStatus(name string) healthchecks.StatusList {
 	}
 }
 
-func checkGroupStatus(name string, lagStatus LagStatus, criticalLagThreshold *int64) *healthchecks.Status {
+func checkGroupStatus(name string, lagStatus lagStatus, criticalLagThreshold *int64) *healthchecks.Status {
 	// If critical lag threshold is specified and exceeded, return a critical alert
 	if criticalLagThreshold != nil && lagStatus.TotalLag > *criticalLagThreshold {
 		return &healthchecks.Status{
@@ -179,7 +184,7 @@ func checkGroupStatus(name string, lagStatus LagStatus, criticalLagThreshold *in
 	}
 }
 
-func checkPartitionStatus(name string, lagStatus LagStatus, partition Partition, criticalLagThreshold *int64) *healthchecks.Status {
+func checkPartitionStatus(name string, lagStatus lagStatus, partition partition, criticalLagThreshold *int64) *healthchecks.Status {
 	// If critical lag threshold is specified and exceeded, return a critical alert
 	if criticalLagThreshold != nil && partition.CurrentLag > *criticalLagThreshold {
 		return &healthchecks.Status{
@@ -201,11 +206,11 @@ func getAlertLevel(status string) healthchecks.AlertLevel {
 	var alertLevel healthchecks.AlertLevel
 
 	switch status {
-	case OK:
+	case ok:
 		alertLevel = healthchecks.OK
-	case WARN, NOTFOUND:
+	case warn, notfound:
 		alertLevel = healthchecks.WARNING
-	case ERR, STOP, STALL:
+	case err, stop, stall:
 		alertLevel = healthchecks.CRITICAL
 	default:
 		alertLevel = healthchecks.WARNING
@@ -214,7 +219,7 @@ func getAlertLevel(status string) healthchecks.AlertLevel {
 	return alertLevel
 }
 
-func formatConsumerGroupDetails(status LagStatus) string {
+func formatConsumerGroupDetails(status lagStatus) string {
 	return fmt.Sprintf(
 		"Consumer group status is %s, total lag of %d for group %s on cluster %s",
 		status.Status,
@@ -224,7 +229,7 @@ func formatConsumerGroupDetails(status LagStatus) string {
 	)
 }
 
-func formatPartitionDetails(partition Partition, status LagStatus) string {
+func formatPartitionDetails(partition partition, status lagStatus) string {
 	return fmt.Sprintf(
 		"Partition status is %s, lag of %d for topic %s in group %s on cluster %s",
 		partition.Status,
