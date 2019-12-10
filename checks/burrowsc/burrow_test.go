@@ -30,7 +30,7 @@ func TestBurrowStatusChecker_CheckGroupStatusOK(t *testing.T) {
 			{
 				Description: "Consumer",
 				Result:      healthchecks.OK,
-				Details:     "Consumer group status is OK, total lag of 13 for group group1 on cluster cluster1",
+				Details:     "Consumer group status is OK, total lag of 17 for group group1 on cluster cluster1",
 			},
 		},
 	}
@@ -61,7 +61,7 @@ func TestBurrowStatusChecker_CheckTopicStatusOK(t *testing.T) {
 			{
 				Description: "Consumer",
 				Result:      healthchecks.OK,
-				Details:     "Partition status is OK, lag of 2 for topic topic1 in group group1 on cluster cluster1",
+				Details:     "Topic topic1 has total lag of 6 for group group1 on cluster cluster1",
 			},
 		},
 	}
@@ -92,7 +92,7 @@ func TestBurrowStatusChecker_CheckGroupStatusThresholdExceeded(t *testing.T) {
 			{
 				Description: "Consumer",
 				Result:      healthchecks.CRITICAL,
-				Details:     "Consumer group status is OK, total lag of 13 for group group1 on cluster cluster1 exceeds threshold",
+				Details:     "Consumer group status is OK, total lag of 17 for group group1 on cluster cluster1 exceeds threshold",
 			},
 		},
 	}
@@ -125,7 +125,7 @@ func TestBurrowStatusChecker_CheckTopicStatusThresholdExceeded(t *testing.T) {
 			{
 				Description: "Consumer",
 				Result:      healthchecks.CRITICAL,
-				Details:     "Partition status is OK, lag of 11 for topic topic2 in group group1 on cluster cluster1 exceeds threshold",
+				Details:     "Topic topic2 has total lag of 11 for group group1 on cluster cluster1 exceeds threshold",
 			},
 		},
 	}
@@ -154,7 +154,7 @@ func TestBurrowStatusChecker_CheckGroupStatusERR(t *testing.T) {
 			{
 				Description: "Consumer",
 				Result:      healthchecks.CRITICAL,
-				Details:     "Consumer group status is ERR, total lag of 15329 for group group1 on cluster cluster1",
+				Details:     "Consumer group status is ERR, total lag of 17717 for group group1 on cluster cluster1",
 			},
 		},
 	}
@@ -185,7 +185,7 @@ func TestBurrowStatusChecker_CheckTopicStatusSTOP(t *testing.T) {
 			{
 				Description: "Consumer",
 				Result:      healthchecks.CRITICAL,
-				Details:     "Partition status is STOP, lag of 8035 for topic topic1 in group group1 on cluster cluster1",
+				Details:     "Topic topic1 has total lag of 8035 for group group1 on cluster cluster1, partition 0 status is STOP and has lag of 8035",
 			},
 		},
 	}
@@ -216,7 +216,7 @@ func TestBurrowStatusChecker_CheckTopicStatusSTALL(t *testing.T) {
 			{
 				Description: "Consumer",
 				Result:      healthchecks.CRITICAL,
-				Details:     "Partition status is STALL, lag of 7294 for topic topic2 in group group1 on cluster cluster1",
+				Details:     "Topic topic2 has total lag of 9682 for group group1 on cluster cluster1, partition 1 status is STALL and has lag of 7294, partition 2 status is WARN and has lag of 2285",
 			},
 		},
 	}
@@ -245,7 +245,7 @@ func TestBurrowStatusChecker_CheckGroupStatusWARN(t *testing.T) {
 			{
 				Description: "Consumer",
 				Result:      healthchecks.WARNING,
-				Details:     "Consumer group status is WARN, total lag of 2760 for group group1 on cluster cluster1",
+				Details:     "Consumer group status is WARN, total lag of 2764 for group group1 on cluster cluster1",
 			},
 		},
 	}
@@ -275,7 +275,7 @@ func TestBurrowStatusChecker_CheckTopicStatusWARN(t *testing.T) {
 			{
 				Description: "Consumer",
 				Result:      healthchecks.WARNING,
-				Details:     "Partition status is WARN, lag of 2736 for topic topic1 in group group1 on cluster cluster1",
+				Details:     "Topic topic1 has total lag of 2740 for group group1 on cluster cluster1, partition 1 status is WARN and has lag of 2736",
 			},
 		},
 	}
@@ -306,7 +306,7 @@ func TestBurrowStatusChecker_CheckTopicStatusOKGroupStatusWarn(t *testing.T) {
 			{
 				Description: "Consumer",
 				Result:      healthchecks.OK,
-				Details:     "Partition status is OK, lag of 24 for topic topic2 in group group1 on cluster cluster1",
+				Details:     "Topic topic2 has total lag of 24 for group group1 on cluster cluster1",
 			},
 		},
 	}
@@ -454,7 +454,7 @@ func TestBurrowStatusChecker_CheckStatusTrimBaseUrl(t *testing.T) {
 			{
 				Description: "Consumer",
 				Result:      healthchecks.OK,
-				Details:     "Consumer group status is OK, total lag of 13 for group group1 on cluster cluster1",
+				Details:     "Consumer group status is OK, total lag of 17 for group group1 on cluster cluster1",
 			},
 		},
 	}

@@ -130,46 +130,24 @@ func (b BurrowStatusChecker) CheckStatus(name string) healthchecks.StatusList {
 		}
 	}
 
-	lagStatus := lagResponse.LagStatus
-	var s *healthchecks.Status
-
-	// If topic is nil, check the status of the entire consumer group instead of a specific partition
+	var s healthchecks.Status
 	if b.Topic == nil {
-		s = checkGroupStatus(name, lagStatus, b.CriticalLagThreshold)
-		return healthchecks.StatusList{
-			StatusList: []healthchecks.Status{
-				*s,
-			},
-		}
-	}
-
-	for _, partition := range lagStatus.Partitions {
-		if partition.Topic == *b.Topic {
-			s = checkPartitionStatus(name, lagStatus, partition, b.CriticalLagThreshold)
-			break
-		}
-	}
-
-	// Topic was not found in consumer group partitions
-	if s == nil {
-		s = &healthchecks.Status{
-			Description: name,
-			Result:      healthchecks.WARNING,
-			Details:     fmt.Sprintf("Topic %s not found in group %s on cluster %s", *b.Topic, b.ConsumerGroup, b.Cluster),
-		}
+		s = checkGroupStatus(name, lagResponse.LagStatus, b.CriticalLagThreshold)
+	} else {
+		s = checkTopicStatus(name, *b.Topic, lagResponse.LagStatus, b.CriticalLagThreshold)
 	}
 
 	return healthchecks.StatusList{
 		StatusList: []healthchecks.Status{
-			*s,
+			s,
 		},
 	}
 }
 
-func checkGroupStatus(name string, lagStatus lagStatus, criticalLagThreshold *int64) *healthchecks.Status {
+func checkGroupStatus(name string, lagStatus lagStatus, criticalLagThreshold *int64) healthchecks.Status {
 	// If critical lag threshold is specified and exceeded, return a critical alert
 	if criticalLagThreshold != nil && lagStatus.TotalLag > *criticalLagThreshold {
-		return &healthchecks.Status{
+		return healthchecks.Status{
 			Description: name,
 			Result:      healthchecks.CRITICAL,
 			Details:     fmt.Sprintf("%s exceeds threshold", formatConsumerGroupDetails(lagStatus)),
@@ -177,28 +155,67 @@ func checkGroupStatus(name string, lagStatus lagStatus, criticalLagThreshold *in
 	}
 
 	// If critical lag threshold was not exceeded or not specified, check Burrow consumer group status
-	return &healthchecks.Status{
+	return healthchecks.Status{
 		Description: name,
 		Result:      getAlertLevel(lagStatus.Status),
 		Details:     formatConsumerGroupDetails(lagStatus),
 	}
 }
 
-func checkPartitionStatus(name string, lagStatus lagStatus, partition partition, criticalLagThreshold *int64) *healthchecks.Status {
-	// If critical lag threshold is specified and exceeded, return a critical alert
-	if criticalLagThreshold != nil && partition.CurrentLag > *criticalLagThreshold {
-		return &healthchecks.Status{
-			Description: name,
-			Result:      healthchecks.CRITICAL,
-			Details:     fmt.Sprintf("%s exceeds threshold", formatPartitionDetails(partition, lagStatus)),
+func checkTopicStatus(name string, topic string, lagStatus lagStatus, criticalLagThreshold *int64) healthchecks.Status {
+	alertLevel := healthchecks.OK
+	critWarnPartitions := []partition{}
+	topicExists := false
+	totalLag := int64(0)
+
+	for _, partition := range lagStatus.Partitions {
+		if partition.Topic == topic {
+			partitionAlertLevel := getAlertLevel(partition.Status)
+			topicExists = true
+			totalLag += partition.CurrentLag
+
+			if partitionAlertLevel == healthchecks.CRITICAL || partitionAlertLevel == healthchecks.WARNING {
+				critWarnPartitions = append(critWarnPartitions, partition)
+
+				// If status is already CRITICAL, don't overwrite
+				if alertLevel != healthchecks.CRITICAL {
+					alertLevel = partitionAlertLevel
+				}
+			}
 		}
 	}
 
-	// If critical lag threshold was not exceeded or not specified, check Burrow partition status
-	return &healthchecks.Status{
+	if !topicExists {
+		return healthchecks.Status{
+			Description: name,
+			Result:      healthchecks.WARNING,
+			Details:     fmt.Sprintf("Topic %s not found in group %s on cluster %s", topic, lagStatus.Group, lagStatus.Cluster),
+		}
+	}
+
+	topicDetails := fmt.Sprintf(
+		"Topic %s has total lag of %d for group %s on cluster %s",
+		topic,
+		totalLag,
+		lagStatus.Group,
+		lagStatus.Cluster,
+	)
+	partitionDetails := formatPartitionsDetails(critWarnPartitions)
+
+	// If critical lag threshold is specified and exceeded, return a critical alert
+	if criticalLagThreshold != nil && totalLag > *criticalLagThreshold {
+		return healthchecks.Status{
+			Description: name,
+			Result:      healthchecks.CRITICAL,
+			Details:     fmt.Sprintf("%s exceeds threshold%s", topicDetails, partitionDetails),
+		}
+	}
+
+	// If critical lag threshold was not exceeded or not specified, check Burrow partition statuses
+	return healthchecks.Status{
 		Description: name,
-		Result:      getAlertLevel(partition.Status),
-		Details:     formatPartitionDetails(partition, lagStatus),
+		Result:      alertLevel,
+		Details:     fmt.Sprintf("%s%s", topicDetails, partitionDetails),
 	}
 }
 
@@ -229,13 +246,17 @@ func formatConsumerGroupDetails(status lagStatus) string {
 	)
 }
 
-func formatPartitionDetails(partition partition, status lagStatus) string {
-	return fmt.Sprintf(
-		"Partition status is %s, lag of %d for topic %s in group %s on cluster %s",
-		partition.Status,
-		partition.CurrentLag,
-		partition.Topic,
-		status.Group,
-		status.Cluster,
-	)
+func formatPartitionsDetails(partitions []partition) string {
+	var str strings.Builder
+
+	for _, partition := range partitions {
+		str.WriteString(fmt.Sprintf(
+			", partition %d status is %s and has lag of %d",
+			partition.Partition,
+			partition.Status,
+			partition.CurrentLag,
+		))
+	}
+
+	return str.String()
 }
