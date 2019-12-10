@@ -6,15 +6,23 @@
     "partitions": [
       {
         "topic": "topic1",
+        "partition": 0,
+        "status": "OK",
+        "current_lag": 4
+      },
+      {
+        "topic": "topic1",
+        "partition": 1,
         "status": "WARN",
         "current_lag": 2736
       },
       {
         "topic": "topic2",
+        "partition": 0,
         "status": "OK",
         "current_lag": 24
       }
     ],
-    "totallag": 2760
+    "totallag": 2764
   }
 }
